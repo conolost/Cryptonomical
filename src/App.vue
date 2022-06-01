@@ -97,6 +97,10 @@
           <div
             v-for="ticker in tickers"
             :key="ticker.name"
+            @click="select = ticker"
+            :class="{
+              'border-4': select == ticker,
+            }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
             <div class="px-4 py-5 sm:p-6 text-center">
@@ -109,7 +113,7 @@
             </div>
             <div class="w-full border-t border-gray-200"></div>
             <button
-              @click="handleDelete(ticker)"
+              @click.stop="handleDelete(ticker)"
               class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
             >
               <svg
@@ -131,9 +135,9 @@
         <hr class="w-full border-t border-gray-600 my-4" />
       </template>
 
-      <section class="relative">
+      <section v-if="select" class="relative">
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-          VUE - USD
+          {{ select.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div class="bg-purple-800 border w-10 h-24"></div>
@@ -141,7 +145,11 @@
           <div class="bg-purple-800 border w-10 h-48"></div>
           <div class="bg-purple-800 border w-10 h-16"></div>
         </div>
-        <button type="button" class="absolute top-0 right-0">
+        <button
+          @click="select = null"
+          type="button"
+          class="absolute top-0 right-0"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -180,6 +188,7 @@ export default {
         { name: "BTC", price: "30000" },
         { name: "DOGE", price: "0.583" },
       ],
+      select: null,
     };
   },
 
@@ -202,3 +211,9 @@ export default {
 </script>
 
 <style src="./app.css"></style>
+
+<!-- 
+  1. make selection for tickers (border-4)
+  2. make closure of selected ticker(v-if)
+  3.
+ -->

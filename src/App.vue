@@ -184,11 +184,9 @@ export default {
   data() {
     return {
       ticker: "",
-      tickers: [
-        { name: "BTC", price: "30000" },
-        { name: "DOGE", price: "0.583" },
-      ],
+      tickers: [],
       select: null,
+      graph: [],
     };
   },
 
@@ -198,8 +196,21 @@ export default {
         name: this.ticker,
         price: "-",
       };
-
       this.tickers.push(newTicker);
+      const inId = setInterval(async () => {
+        const r = await fetch(
+          "https://min-api.cryptocompare.com/data/price?fsym=" +
+            newTicker.name +
+            "&tsyms=USD&api_key=b32f91d8d6531b1e506fe2d3802f4032f7896e97d49a8c7922997138ec57037d"
+        );
+        const data = await r.json();
+
+        if (!this.tickers.find((t) => t.name == newTicker.name)) {
+          clearInterval(inId);
+        }
+        this.tickers.find((t) => t.name == newTicker.name).price =
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+      }, 5000);
       this.ticker = "";
     },
 
@@ -213,7 +224,7 @@ export default {
 <style src="./app.css"></style>
 
 <!-- 
-  1. make selection for tickers (border-4)
-  2. make closure of selected ticker(v-if)
+  1. Write request to Api
+  2. Make true visibility for graph
   3.
  -->

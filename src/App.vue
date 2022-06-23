@@ -210,8 +210,11 @@ export default {
         if (!this.tickers.find((t) => t.name == newTicker.name)) {
           return clearInterval(inId);
         }
-        this.tickers.find((t) => t.name === newTicker.name).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        Reflect.set(
+          newTicker,
+          "price",
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2)
+        );
 
         if (this.select?.name == newTicker.name) {
           this.graph.push(data.USD);
@@ -237,9 +240,3 @@ export default {
 </script>
 
 <style src="./app.css"></style>
-
-<!-- 
-  1. Write request to Api
-  2. Make true visibility for graph
-  3.
- -->

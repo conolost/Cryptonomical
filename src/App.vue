@@ -1,6 +1,7 @@
 <template>
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
-    <!-- <div
+    <div
+      v-if="notLoaded"
       class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center"
     >
       <svg
@@ -23,7 +24,7 @@
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         ></path>
       </svg>
-    </div> -->
+    </div>
     <div class="container">
       <section>
         <div class="flex">
@@ -181,6 +182,7 @@ export default {
       coinList: [],
       hints: [],
       dublicate: false,
+      notLoaded: true,
     };
   },
   async created() {
@@ -191,6 +193,7 @@ export default {
     for (let key in data.Data) {
       this.coinList.push(data.Data[key].FullName);
     }
+    this.notLoaded = false;
   },
   methods: {
     checkHint(t) {
@@ -264,14 +267,5 @@ export default {
 </script>
 
 <!-- 
-  1. Добавити підказки:
-    * не більше 4х
-    * введені дані зрівнюються з FullName || Symbol from ConList
-    * підказок може не бути
-    * при кліку по підказці тікера, який вже добавлеий - інпут заповнюється іменем підказки і виводиться застереження 
-  2. Перевірка на повторне добавлення тікера
-    * без урахування регістра
-    * при будь-яких діях в інпуті застереження зникає
-  3. Добавлення тікера по кліку на підказку
   4. Спінер до прихода коін-ліста
 -->

@@ -34,7 +34,8 @@
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 v-model="ticker"
-                @keydown.enter="add"
+                @keydown.enter="add()"
+                @input="checkHint(ticker)"
                 type="text"
                 name="wallet"
                 id="wallet"
@@ -44,31 +45,21 @@
             </div>
             <div class="flex bg-white shadow-md p-1 rounded-md flex-wrap">
               <span
+                v-for="h in hints"
+                :key="h"
+                @click="addWithHints(h)"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
-                BTC
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                CHD
+                {{ h }}
               </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="dublicate" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button
-          @click.Enter="add()"
+          @click="add()"
           type="button"
           class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
@@ -187,15 +178,53 @@ export default {
       tickers: [],
       select: null,
       graph: [],
+      coinList: [],
+      hints: [],
+      dublicate: false,
     };
   },
-
+  async created() {
+    const r = await fetch(
+      "https://min-api.cryptocompare.com/data/all/coinlist?summary=true"
+    );
+    const data = await r.json();
+    for (let key in data.Data) {
+      this.coinList.push(data.Data[key].FullName);
+    }
+  },
   methods: {
+    checkHint(t) {
+      this.dublicate = false;
+      let res = [];
+      this.hints = [];
+      res = this.coinList
+        .map((item, i) =>
+          item.toLowerCase().includes(t.toLowerCase()) == true ? i : -1
+        )
+        .filter((item) => item >= 0);
+      for (let idx in res) {
+        if (t.length) {
+          const regex = /(?<=\()[^)]+(?=\))/g;
+          let hintsArr = this.coinList[res[idx]].match(regex);
+          this.hints.push(hintsArr[0]);
+        }
+        if (this.hints.length == 4) break;
+      }
+    },
+    addWithHints(hint) {
+      this.ticker = hint;
+      this.add();
+      this.hints = [];
+    },
     add() {
       const newTicker = {
-        name: this.ticker,
+        name: this.ticker.toUpperCase(),
         price: "-",
       };
+      if (this.tickers.find((t) => t.name == this.ticker.toUpperCase())) {
+        this.dublicate = true;
+        return;
+      }
       this.tickers.push(newTicker);
       const inId = setInterval(async () => {
         const r = await fetch(
@@ -208,11 +237,8 @@ export default {
         if (!this.tickers.find((t) => t.name == newTicker.name)) {
           return clearInterval(inId);
         }
-        Reflect.set(
-          newTicker,
-          "price",
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2)
-        );
+        this.tickers.find((t) => t.name === newTicker.name).price =
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
 
         if (this.select?.name == newTicker.name) {
           this.graph.push(data.USD);
@@ -238,14 +264,14 @@ export default {
 </script>
 
 <!-- 
-  1. Перевірка на повторне добавлення тікера
-    * без урахування регістра
-    * при будь-яких діях в інпуті застереження зникає
-  2. Добавити підказки:
+  1. Добавити підказки:
     * не більше 4х
     * введені дані зрівнюються з FullName || Symbol from ConList
     * підказок може не бути
     * при кліку по підказці тікера, який вже добавлеий - інпут заповнюється іменем підказки і виводиться застереження 
+  2. Перевірка на повторне добавлення тікера
+    * без урахування регістра
+    * при будь-яких діях в інпуті застереження зникає
   3. Добавлення тікера по кліку на підказку
   4. Спінер до прихода коін-ліста
 -->

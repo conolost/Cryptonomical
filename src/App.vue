@@ -220,6 +220,16 @@ export default {
     };
   },
   async created() {
+    const windowData = Object.fromEntries(
+      new URL(window.location).searchParams.entries()
+    );
+    if (windowData.filter) {
+      this.filter = windowData.filter;
+    }
+    if (windowData.page) {
+      this.page = windowData.page;
+    }
+
     const r = await fetch(
       "https://min-api.cryptocompare.com/data/all/coinlist?summary=true"
     );
@@ -324,15 +334,25 @@ export default {
   watch: {
     filter() {
       this.page = 1;
+      window.history.pushState(
+        null,
+        "",
+        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+      );
+    },
+    page() {
+      window.history.pushState(
+        null,
+        "",
+        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+      );
     },
   },
 };
 </script>
 
 <!-- 
-  2. Add pagination
-    *create buttons
-    *create input
-    * using watcher method
   3. Add changing in URl when pagination
+  * history push state
+  * fromEntries
 -->

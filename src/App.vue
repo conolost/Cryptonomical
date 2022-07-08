@@ -44,7 +44,10 @@
                 placeholder="Например DOGE"
               />
             </div>
-            <div class="flex bg-white shadow-md p-1 rounded-md flex-wrap">
+            <div
+              v-if="hints.length"
+              class="flex bg-white shadow-md p-1 rounded-md flex-wrap"
+            >
               <span
                 v-for="h in hints"
                 :key="h"
@@ -80,12 +83,37 @@
           Добавить
         </button>
       </section>
-
       <template v-if="tickers.length">
+        <span>
+          Фильтр:
+          <input
+            v-model="filter"
+            type="text"
+            name="filter"
+            id="filter"
+            class="w-500 pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
+            placeholder="Например btc"
+          />
+        </span>
+        <span>
+          <button
+            v-if="page > 1"
+            type="button"
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Назад
+          </button>
+          <button
+            type="button"
+            class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Вперед
+          </button>
+        </span>
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in tickers"
+            v-for="t in filteredTickers()"
             :key="t.name"
             @click="selectT(t)"
             :class="{
@@ -183,6 +211,8 @@ export default {
       hints: [],
       dublicate: false,
       notLoaded: true,
+      filter: "",
+      page: 1,
     };
   },
   async created() {
@@ -259,6 +289,11 @@ export default {
       this.tickers.push(currentTicker);
       this.subscribeToUpdates(currentTicker);
       this.ticker = "";
+    },
+    filteredTickers() {
+      return this.tickers.filter((t) =>
+        t.name.includes(this.filter.toUpperCase())
+      );
     },
     selectT(t) {
       this.select = t;

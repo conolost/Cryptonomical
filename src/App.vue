@@ -194,7 +194,14 @@ export default {
       this.coinList.push(data.Data[key].FullName);
     }
     this.notLoaded = false;
+
+    const dataFromLS = localStorage.getItem("list-of-tickers");
+    if (dataFromLS) {
+      this.tickers = JSON.parse(dataFromLS);
+      this.tickers.forEach((t) => this.subscribeToUpdates(t));
+    }
   },
+
   methods: {
     checkHint(t) {
       this.dublicate = false;
@@ -217,10 +224,31 @@ export default {
     addWithHints(hint) {
       this.ticker = hint;
       this.add();
-      this.hints = [];
+    },
+    subscribeToUpdates(ticker) {
+      localStorage.setItem("list-of-tickers", JSON.stringify(this.tickers));
+      const inId = setInterval(async () => {
+        const r = await fetch(
+          "https://min-api.cryptocompare.com/data/price?fsym=" +
+            ticker.name +
+            "&tsyms=USD&api_key=b32f91d8d6531b1e506fe2d3802f4032f7896e97d49a8c7922997138ec57037d"
+        );
+        const data = await r.json();
+
+        if (!this.tickers.find((t) => t.name == ticker.name)) {
+          return clearInterval(inId);
+        }
+        this.tickers.find((t) => t.name === ticker.name).price =
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+
+        if (this.select?.name == ticker.name) {
+          this.graph.push(data.USD);
+        }
+      }, 3000);
     },
     add() {
-      const newTicker = {
+      this.hints = [];
+      const currentTicker = {
         name: this.ticker.toUpperCase(),
         price: "-",
       };
@@ -228,25 +256,8 @@ export default {
         this.dublicate = true;
         return;
       }
-      this.tickers.push(newTicker);
-      const inId = setInterval(async () => {
-        const r = await fetch(
-          "https://min-api.cryptocompare.com/data/price?fsym=" +
-            newTicker.name +
-            "&tsyms=USD&api_key=b32f91d8d6531b1e506fe2d3802f4032f7896e97d49a8c7922997138ec57037d"
-        );
-        const data = await r.json();
-
-        if (!this.tickers.find((t) => t.name == newTicker.name)) {
-          return clearInterval(inId);
-        }
-        this.tickers.find((t) => t.name === newTicker.name).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-
-        if (this.select?.name == newTicker.name) {
-          this.graph.push(data.USD);
-        }
-      }, 3000);
+      this.tickers.push(currentTicker);
+      this.subscribeToUpdates(currentTicker);
       this.ticker = "";
     },
     selectT(t) {
@@ -255,6 +266,7 @@ export default {
     },
     handleDelete(tickerForDelete) {
       this.tickers = this.tickers.filter((t) => t !== tickerForDelete);
+      localStorage.setItem("list-of-tickers", JSON.stringify(this.tickers));
       if (this.select == tickerForDelete) this.select = null;
     },
     normalizedGraph() {
@@ -267,5 +279,11 @@ export default {
 </script>
 
 <!-- 
-  4. Спінер до прихода коін-ліста
+  1. Add tickers to localStorage
+    *use method created
+  2. Add pagination and filter
+    *create buttons
+    *create input
+    * using watcher method
+  3. Add changing in URl when pagination
 -->

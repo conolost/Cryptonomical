@@ -98,12 +98,15 @@
         <span>
           <button
             v-if="page > 1"
+            @click="page -= 1"
             type="button"
             class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Назад
           </button>
           <button
+            v-if="hasNextPage"
+            @click="page += 1"
             type="button"
             class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
@@ -213,6 +216,7 @@ export default {
       notLoaded: true,
       filter: "",
       page: 1,
+      hasNextPage: false,
     };
   },
   async created() {
@@ -268,9 +272,10 @@ export default {
         if (!this.tickers.find((t) => t.name == ticker.name)) {
           return clearInterval(inId);
         }
-        this.tickers.find((t) => t.name === ticker.name).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-
+        if (data.USD) {
+          this.tickers.find((t) => t.name === ticker.name).price =
+            data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        }
         if (this.select?.name == ticker.name) {
           this.graph.push(data.USD);
         }
@@ -291,9 +296,14 @@ export default {
       this.ticker = "";
     },
     filteredTickers() {
-      return this.tickers.filter((t) =>
+      const start = (this.page - 1) * 6;
+      const end = this.page * 6;
+
+      const filtered = this.tickers.filter((t) =>
         t.name.includes(this.filter.toUpperCase())
       );
+      this.hasNextPage = filtered.length > end;
+      return filtered.slice(start, end);
     },
     selectT(t) {
       this.select = t;
@@ -303,6 +313,7 @@ export default {
       this.tickers = this.tickers.filter((t) => t !== tickerForDelete);
       localStorage.setItem("list-of-tickers", JSON.stringify(this.tickers));
       if (this.select == tickerForDelete) this.select = null;
+      if (this.filteredTickers().length < 1) this.page -= 1;
     },
     normalizedGraph() {
       const min = Math.min(...this.graph);
@@ -310,13 +321,16 @@ export default {
       return this.graph.map((p) => 5 + ((p - min) * 95) / (max - min));
     },
   },
+  watch: {
+    filter() {
+      this.page = 1;
+    },
+  },
 };
 </script>
 
 <!-- 
-  1. Add tickers to localStorage
-    *use method created
-  2. Add pagination and filter
+  2. Add pagination
     *create buttons
     *create input
     * using watcher method

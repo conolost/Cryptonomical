@@ -308,16 +308,20 @@ export default {
     filteredTickers() {
       const start = (this.page - 1) * 6;
       const end = this.page * 6;
-
-      const filtered = this.tickers.filter((t) =>
-        t.name.includes(this.filter.toUpperCase())
-      );
-      this.hasNextPage = filtered.length > end;
-      return filtered.slice(start, end);
+      if (this.filter) {
+        const filtered = this.tickers.filter((t) =>
+          t.name.includes(this.filter.toUpperCase())
+        );
+        this.hasNextPage = filtered.length > end;
+        return filtered.slice(start, end);
+      }
+      return this.tickers;
     },
     selectT(t) {
-      this.select = t;
-      this.graph = [];
+      if (this.select != t) {
+        this.select = t;
+        this.graph = [];
+      }
     },
     handleDelete(tickerForDelete) {
       this.tickers = this.tickers.filter((t) => t !== tickerForDelete);
@@ -328,7 +332,10 @@ export default {
     normalizedGraph() {
       const min = Math.min(...this.graph);
       const max = Math.max(...this.graph);
-      return this.graph.map((p) => 5 + ((p - min) * 95) / (max - min));
+      if (min != max) {
+        return this.graph.map((p) => 5 + ((p - min) * 95) / (max - min));
+      }
+      return this.graph.map((p) => p - p + 50);
     },
   },
   watch: {
@@ -352,7 +359,5 @@ export default {
 </script>
 
 <!-- 
-  3. Add changing in URl when pagination
-  * history push state
-  * fromEntries
+1. Fix bug with graph selection
 -->
